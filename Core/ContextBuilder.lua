@@ -23,6 +23,7 @@ local function NextSnapshotID()
     return snapshotCounter
 end
 
+-- misc builders
 local function BuildMeta(triggerType)
     return {
         snapshotID = NextSnapshotID(),
@@ -128,7 +129,7 @@ end
 
 local function BuildCapabilities()
     return {
-        canDismount = not InCombatLockeddown(),
+        canDismount = not InCombatLockedown(),
         canBlockMount = true,
         canNotify = true,
     }
