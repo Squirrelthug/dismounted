@@ -3,25 +3,371 @@ CODEBASE SNAPSHOT
 ================================================================================
 Project: dismounted
 Path: /Users/squirrelthug/Software_Projects/dismounted
-Generated: 2026-01-17 19:45:59
+Generated: 2026-01-18 01:03:17
 ================================================================================
 
 DIRECTORY STRUCTURE
 ----------------------------------------
 dismounted/
 ├── Campaigns
+│   ├── CampaignManager.lua
+│   └── Defaults.lua
 ├── Core
+│   ├── ContextBuilder.lua
+│   ├── EventRouter.lua
+│   ├── Judgement.lua
+│   └── OutcomeRouter.lua
 ├── Persistence
 ├── tests
 │   └── dismounted_test
+│       ├── dismounted_test.lua
+│       └── dismounted_test.toc
 ├── UI
-└── Util
+│   └── Settings.lua
+├── Util
+├── dismounted.lua
+└── dismounted.toc
 
 ================================================================================
 FILE CONTENTS
 ================================================================================
 
+--------------------------------------------------------------------------------
+FILE: dismounted.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/dismounted.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: dismounted.toc
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/dismounted.toc
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: UI/Settings.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/UI/Settings.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Core/OutcomeRouter.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Core/OutcomeRouter.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Core/ContextBuilder.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Core/ContextBuilder.lua
+--------------------------------------------------------------------------------
+local ADDON_NAME, Addon = ...
+local ContextBuilder = {}
+
+Addon.ContextBuilder = ContextBuilder
+
+-- localize global functions
+local GetTime = GetTime
+local UnitGUID = UnitGUID
+local UnitLevel = UnitLevel
+local UnitClass = UnitClass
+local UnitRace = UnitRace
+local UnitFactionGroup = UnitFactionGroup
+local IsMounted = IsMounted
+local IsIndoors = IsIndoors
+local IsFlying = IsFlying
+local IsSwimming = IsSwimming
+
+-- snapshotting for race conditions
+local snapshotCounter = 0
+
+local function NextSnapshotID()
+    snapshotCounter = snapshotCounter + 1
+    return snapshotCounter
+end
+
+local function BuildMeta(triggerType)
+    return {
+        snapshotID = NextSnapshotID(),
+        timestamp = GetTime(),
+        addonVersion = Addon.version or "dev",
+        evaluationReason = triggerType,
+    }
+end
+
+local function BuildTrigger(trigger)
+    return {
+        type = trigger.type,
+        unit = trigger.unit or "player",
+        reactive = trigger.reactive or false,
+        rawHint = trigger.rawHint,
+    }
+end
+
+local function BuildCampaign()
+    local Campaigns = Addon.Campaigns
+
+    if not Campaigns or not Campaigns.IsActive() then
+        return {
+            active = false,
+        }
+    end
+
+    local campaign = Campaigns.GetActiveCampaign()
+
+    return {
+        active = true,
+        id = campaign.id,
+        ruleProfile = campaign.ruleProfile,
+        severity = campaign.severity,
+        overrides = campaign.overrides,
+    }
+end
+
+-- player section
+local function BuildPlayer()
+    local className, classFile = UnitClass("player"),
+    local raceName, raceFile = Unitrace("player"),
+    local faction = UnitFactionGroup("player")
+
+    return {
+        guid = UnitGUID("player"),
+        level = UnitLevel("player"),
+        class = classFile,
+        race = raceFile,
+        faction = faction,
+        mounted = IsMounted(),
+    }
+end
+
+-- environments
+local funciton BuildEnvironment
+
+--------------------------------------------------------------------------------
+FILE: Core/EventRouter.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Core/EventRouter.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Core/Judgement.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Core/Judgement.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: tests/dismounted_test/dismounted_test.toc
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/tests/dismounted_test/dismounted_test.toc
+--------------------------------------------------------------------------------
+## Interface: 110207
+## Title: Dismounted Test
+## Notes: Test file for dismounted_test addon
+## Author: Squirrelthug
+## Version: 0.1
+
+dismounted_test.lua
+
+
+--------------------------------------------------------------------------------
+FILE: tests/dismounted_test/dismounted_test.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/tests/dismounted_test/dismounted_test.lua
+--------------------------------------------------------------------------------
+local frame = CreateFrame("Frame")
+local function TestPrint(msg)
+    DEFAULT_CHAT_FRAME:AddMessage("|cff88ccff[Dismounted Test]|r " .. msg)
+end
+
+-- Event Registration
+frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
+frame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+
+frame:SetScript("OnEvent", function(self, event, ...)
+    if event == "ADDON_LOADED" then
+        local addonName = ...
+        if addonName == "Dismounted_Test" then
+            TestPrint("Addon loaded and listening")
+        end
+    
+    elseif event == "PLAYER_MOUNT_DISPLAY_CHANGED" then
+        if IsMounted() then
+            TestPrint("Mount detected")
+
+
+            -- enforcement test
+            Dismount()
+            TestPrint("Mount Interrupted (dismounted). ")
+        end
+    
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local unit, castGUID, spellID = ...
+
+        if unit == "player" then
+            TestPrint("Spell cast succeeded. SpellID: " .. tostring(spellID))
+        end
+    end
+end)
+
+
+
+--------------------------------------------------------------------------------
+FILE: Campaigns/Defaults.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Campaigns/Defaults.lua
+--------------------------------------------------------------------------------
+local Defaults = {}
+
+Defaults.CAMPAIGN_SCHEMA_VERSION = 1
+
+Defaults.DefaultSettings = {
+    active = true,
+    mountPersistence = true,
+    anchorOnDismount = true,
+    anchorRadius = 30,
+}
+
+Defaults.DefaultCampaign = {
+    id = "default_world_campaign",
+    name = "Default World Campaign",
+    description = "A grounded, persistent travel experience.",
+    schemaVersion = Defaults.CAMPAIGN_SCHEMA_VERSION,
+
+    settings = CopyTable(Defaults.DefaultSettings),
+
+    mounts = {
+        [mountID] ={
+            lastSeen = {mapID, x, y, timestamp },
+            state = {anchored = true/false },
+            lastDismountReason = "VOLUNTARY" | "FORCED" | "UNKNOWN"
+        }
+    }
+}
+
+Defaults.OffState = {
+    activeCampaignID = nil
+}
+
+return Defaults
+
+
+
+--------------------------------------------------------------------------------
+FILE: Campaigns/CampaignManager.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Campaigns/CampaignManager.lua
+--------------------------------------------------------------------------------
+-- manages campaign lifecycle, selection, and validation
+
+local _, ns = ...
+local CampaignManager = {}
+ns.CampaignManager = CampaignManager
+
+local Defaults = ns.CampaignDefaults
+
+function CampaignManager:Initialize()
+    if not DismountedDB then
+        DismountedDB = {}
+    end
+
+    if not DismountedDB.campaigns then
+        DismountedDB.campaigns = {}
+    end
+
+    if not DismountedDB.activeCampaignID then
+        DismountedDB.activeCampaignID = nil
+    end
+
+    -- ensure default campaign exists
+    if not DismountedDB.campaigns[Defaults.DefaultCampaign.id] then
+        self:CreateCampaign(CopyTable(Defaults.DefaultCampaign))
+        DismountedDB.activeCampaignID = Defaults.DefaultCampaign.id
+    end
+
+    -- validation of active campaign
+    if DismountedDB.activeCampaignID then
+        if not DismountedDB.campaigns[DismountedDB.activeCampaignID] then
+            DismountedDB.activeCampaignID = Defaults.DefaultCampaign.id
+        end
+    end
+end
+
+-- Create new campaign
+function CampaignManager:CreateCampaign(campaignData)
+    if not campaignData or not campaignData.id then
+        return false
+    end
+
+    if DismountedDB.campaigns[campaignData.idl] then
+        return false
+    end
+
+    -- ensure required fields
+    campaignData.schemaVersion = campaignData.schemaVersion or Defaults.CAMPAIGN_SCHEMA_VERSION
+    campaignData.settings = campaignData.settings or CopyTable(Defaults.DefaultSettings)
+    campaignData.mounts = campaignData.mounts or {}
+
+    DismountedDB.campaigns[campaignDAta.id] = campaignData
+    return true
+end
+
+-- activate campaign by id
+function CampaignManager:SetActiveCampaign(campaignID)
+    if campaignID = nil then
+        DismountedDB.activeCampaignID = nil
+        return true
+    end
+    
+    if not DismountedDB.campaigns[campaignID] then
+        return false
+    end
+
+    DismountedDB.activeCampaignID = campaignID
+    return true
+end
+
+-- get acive campaign table
+function CampaignManager:GetActiveCampaign()
+    local id = DismountedDB.activeCampaignID
+    if not id  then
+        returns nil
+    end
+    return DismountedDB.campaigns[id]
+end
+
+-- get active campaign ID
+function CampaignManager:GetActiveCampaignID()
+    return DismountedDB.activeCampaignID
+end
+
+-- safe accessor for campaign settings
+function CampaignManager:GetActiveCampaignSettings()
+    local campaign = self.GetActiveCampaign()
+    if not campaign then
+        return nil
+    end
+    return campaign.settings
+end
+
+-- get mount store for active campaign
+function CampaignManager:GetActiveCampaignMounts()
+    local campaign = self.GetActiveCampaign()
+    if not campaign then
+        return nil
+    end
+    return campaign.mounts
+end
+
+-- iterate campaigns
+function CampaignManager:IterateCampaigns()
+    return pairs(DismountedDB.campaigns)
+end
+
+-- system active check
+function CampaignManager:IsCampaignActive()
+    return DismountedDB.activeCampaignID ~= nil
+end
+
+return CampaignManager
+
+
 ================================================================================
 END OF SNAPSHOT
-Total files processed: 0
+Total files processed: 11
 ================================================================================

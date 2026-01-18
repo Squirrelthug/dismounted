@@ -77,5 +77,90 @@ local function BuildPlayer()
     }
 end
 
+local function BuildMovement()
+    return{
+        locomotion = IsMounted() and "mounted" or "ground",
+        forced = UnitOnTaxi("player"),
+        control = UnitIsDeadOrGhost("player") and "none" or "full",
+    }
+end
+
 -- environments
-local funciton BuildEnvironment
+local function BuildEnvironment()
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local instanceName, instanceType = GetInstanceInfo()
+
+    return {
+        mapID = mapID,
+        instanceType = instanceType,
+        indoors = IsIndoors(),
+        swimming = IsSwimming(),
+        flying = IsFlying(),
+        resting = IsResting(),
+    }
+end
+
+-- mounts
+local function BuildMounts()
+    if not IsMounted() then
+        return {
+            mounted = false,
+        }
+    end
+
+    local mountID = C_MountJournal.GetMountFromSpell(GetSpellInfo(SpellID))
+
+    return {
+        mounted = true,
+        mountID = mountID,
+        source = "spell",
+    }
+end
+
+local function BuildHistory()
+    local Persistence = Addon.Persistence
+    if not Persistence then
+        return {}
+    end
+
+    return Persistence.GetRecentMountHistory() or {}
+end
+
+local function BuildCapabilities()
+    return {
+        canDismount = not InCombatLockeddown(),
+        canBlockMount = true,
+        canNotify = true,
+    }
+end
+
+local function BuildIntegrity(context)
+    local issues = {}
+
+    if context.mount.mounted and not context.mount.mountID then
+        table.insert(issues, "Mounted but mountID unknown")
+    end
+
+    return {
+        issues = issues,
+        safeToEnforce = #issues == 0,
+    }
+end
+
+-- entry point
+function ContextBuilder.Build(trigger)
+    local context = {}
+
+    context.meta = BuildMeta(trigger.type)
+    context.trigger = BuildTrigger(trigger)
+    context.campaign = BuildCampaign()
+    context.player = BuildPlayer()
+    context.environment = BuildEnvironment()
+    context.mount = BuildMount()
+    context.movement = BuildMovement()
+    context.history = BuildHistory()
+    context.capabilities = BuildCapabilities()
+    context.integrity = BuildIntegrity(context)
+
+    return context
+end

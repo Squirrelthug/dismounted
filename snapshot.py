@@ -16,14 +16,14 @@ INCLUDE_EXTENSIONS = {
     # Programming languages
     '.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.c', '.cpp', '.cc', '.cxx', '.h', '.hpp',
     '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala', '.r', '.m', '.mm',
-    '.pl', '.sh', '.bash', '.zsh', '.fish', '.ps1', '.bat', '.cmd',
+    '.pl', '.sh', '.bash', '.zsh', '.fish', '.ps1', '.bat', '.cmd', '.lua',
     
     # Web technologies
     '.html', '.htm', '.css', '.scss', '.sass', '.less', '.vue', '.svelte',
     
     # Configuration and data files
     '.json', '.xml', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.config',
-    '.env', '.gitignore', '.gitattributes', '.dockerignore',
+    '.env', '.gitignore', '.gitattributes', '.dockerignore', '.toc',
     
     # Documentation
     '.md', '.rst', '.txt', '.rtf',
