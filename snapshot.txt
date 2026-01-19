@@ -3,7 +3,7 @@ CODEBASE SNAPSHOT
 ================================================================================
 Project: dismounted
 Path: /Users/squirrelthug/Software_Projects/dismounted
-Generated: 2026-01-18 15:35:46
+Generated: 2026-01-18 19:03:35
 ================================================================================
 
 DIRECTORY STRUCTURE
@@ -18,6 +18,14 @@ dismounted/
 │   ├── Judgement.lua
 │   └── OutcomeRouter.lua
 ├── Persistence
+│   ├── CampaignState.lua
+│   ├── Migration.lua
+│   ├── MountHistory.lua
+│   ├── MountState.lua
+│   ├── MovementState.lua
+│   ├── PersistenceManager.lua
+│   ├── RelocationHistory.lua
+│   └── StateSchema.lua
 ├── tests
 │   └── dismounted_test
 │       ├── dismounted_test.lua
@@ -591,6 +599,431 @@ end)
 
 
 --------------------------------------------------------------------------------
+FILE: Persistence/PersistenceManager.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/PersistenceManager.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Persistence/CampaignState.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/CampaignState.lua
+--------------------------------------------------------------------------------
+local CampaignState = {}
+CampaignState.__index = CampaignState
+
+local function EnsureCampaignRoot()
+    if not DismountedDB then
+        return nil
+    end
+
+    DismountedDB.campaigns = DismountedDB.campaigns or {}
+    return DismountedDB.campaigns
+end
+
+function CampaignState:CreateCampaign(campaignID, campaignName)
+    if not campaignID then
+        return nil
+    end
+
+    local campaigns = EnsureCampaignRoot()
+    if not campaigns then
+        return nil
+    end
+
+    if campaigns[campaignID] then
+        return campaigns[campaignID]
+    end
+
+    campaigns[campaignID] = {
+        id = campaignID,
+        name = campaignName or "Unnamed Campaign",
+        -- timestamp metadata
+        createdAt = time(),
+        lastAccessedAt = time(),
+        -- campaign systems
+        mounts = {},
+        narrativeFlags = {},
+        settingsSnapshot = {},
+        version = 1,
+    }
+
+    return campaigns[campaignID]
+end
+
+function CampaignState:GetCampaign(campaignID)
+    if not campaignID then
+        return nil
+    end
+
+    local campaigns = EnsureCampaignRoot()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self()
+    if not campaigns then
+        return nil
+    end
+
+    local campaign = campaigns[campaignID]
+    if campaign then
+        campaign.lastAccessedAt = time()
+    end
+
+    return campaign
+end
+
+function CampaignState:SetNarrativeFlag(campaignID, flagKey, value)
+    local campaign = self:GetCampaign(campaignID)
+    if not campaign or not flagKey then
+        return false
+    end
+
+    campaign.narrativeFlags[flagKey] = value ~= false
+    return true
+end
+
+function CampaignState:GetNarrativeFlag(campaignID, flagKey)
+    local campaign = self:GetCampaign(campaignID)
+    if not campaign or not flagKey then
+        return nil
+    end
+
+    return campaign.narrativeFlags[flagKey]
+end
+
+function CampaignState:GetAllCampaigns()
+    local campaigns = EnsureCampaignRoot()
+    if not campaigns then
+        return nil
+    end
+
+    return campaigns
+end
+
+function CampaignState:DeleteCampaign(campaignID)
+    if not campaignID then
+        return false
+    end
+
+    local campaigns = EnsureCampaignRoot()
+    if not campaigns or not campaigns[campaignID] then
+        return false
+    end
+
+    campaigns[campaignID] = nil
+    return true
+end
+
+return CampaignState
+
+
+--------------------------------------------------------------------------------
+FILE: Persistence/MountState.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/MountState.lua
+--------------------------------------------------------------------------------
+local MountState = {}
+MountState.__index = MountState
+
+-- constants/enums
+MountState.CUSTODY = {
+    WITH_PLAYER = "WITH_PLAYER",
+    ANCHORED = "ANCHORED",
+    STABLED = "STABLED",
+    DISPLACED = "DISPLACED",
+    UNKNOWN = "UNKNOWN",
+}
+
+MountState.DISMOUNT_REASON = {
+    VOLUNTARY = "VOLUNTARY",
+    RULE_VIOLATION_ZONE = "RULE_VIOLATION_ZONE",
+    RULE_VIOLATION_MOUNT = "RULE_VIOLATION_MOUNT",
+    AIRSPACE_VIOLATION = "AIRSPACE_VIOLATION",
+    COMBAT_FORCED = "COMBAT_FORCED",
+    SYSTEM_UNKNOWN = "SYSTEM_UNKNOWN",
+}
+
+-- internal helpers
+local function EnsureCampaignRoot()
+    if not DismountedDB then
+        return nil
+    end
+
+    DismountedDB.campaigns = DismountedDB.campaigns or {}
+    return DismountedDB.campaigns
+end
+
+local function GetCampaign(campaignID)
+    if not campaignID then
+        return nil
+    end
+
+    local campaigns = EnsureCampaignRoot()
+    if not campaigns then
+        return nil
+    end
+
+    return campaigns[campaignID]
+end
+
+local function EnsureMountTable(campaign)
+    if not campaign then
+        return nil
+    end
+
+    campaign.mounts = campaign.mounts or {}
+    return campaign.mounts
+end
+
+local function DefaultMountRecord()
+    return {
+        custody = MountState.CUSTODY.UNKNOWN,
+        anchored = false,
+        lastKnown = nil,
+        lastSummonedAt = nil,
+        lastDismountedAt = nil,
+        lastDismountReason = MountState.DISMOUNT_REASON.SYSTEM_UNKNOWN,
+    }
+end
+
+local function EnsureMountRecord(campaignID, mountID)
+    if not mountID then
+        return nil
+    end
+
+    local campaign = GetCampaign(campaignID)
+    if not campaign then
+        return nil
+    end
+
+    local mounts = EnsureMountTable(campaign)
+    if not mounts then
+        return nil
+    end
+
+    mounts[mountID] = mounts[mountID] or DefaultMountRecord()
+    return mounts[mountID]
+end
+
+-- public accessors
+function MountState:Get(campaignID, mountID)
+    if not campaignID or not mountID then
+        return nil
+    end
+
+    return EnsureMountRecord(campaignID, mountID)
+end
+
+-- anchoring / location updates
+function MountState:SetAnchoredAt(
+    campaignID,
+    mountID,
+    mapID,
+    x,
+    y,
+    dismountReason,
+)
+    if not campaignID or not mountID or not mapID or not x or not y then
+        return false
+    end
+
+    local record = EnsureMountRecord(campaignID, mountID)
+    if not record then
+        return false
+    end
+
+    record.custody = MountState.CUSTODY.ANCHORED
+    record.anchored = true
+
+    record.lastKnown = {
+        mapID = mapID,
+        x = x,
+        y = y,
+        at = time(),
+    }
+
+    record.lastDismountedAt = time()
+    record.lastDismountReason = dismountReason or MountState.DISMOUNT_REASON.SYSTEM_UNKNOWN
+
+    return true
+end
+
+-- custody updates
+function MountState:SetWithPlayer(campaignID, mountID)
+    if not campaignID or not mountID then
+        return false
+    end
+
+    local record = EnsureMountRecord(campaignID, mountID)
+    if not record then
+        return false
+    end
+
+    record.custody = MountState.CUSTODY.WITH_PLAYER
+    record.anchored = false
+    
+    record.lastSummonedAt = time()
+
+    return true
+end
+
+-- maintenance
+function MountState:ClearLocation(campaignID, mountID)
+    if not campaignID or not mountID then
+        return false
+    end
+
+    local record = EnsureMountRecord(campaignID, mountID)
+    if not record then
+        return false
+    end
+
+    record.lastKnown = nil
+    record.anchored = false
+    record.custody = MountState.CUSTODY.UNKNOWN
+
+    return true
+end
+
+
+--------------------------------------------------------------------------------
+FILE: Persistence/RelocationHistory.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/RelocationHistory.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Persistence/MountHistory.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/MountHistory.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Persistence/StateSchema.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/StateSchema.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Persistence/MovementState.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/MovementState.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+FILE: Persistence/Migration.lua
+FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Persistence/Migration.lua
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
 FILE: Campaigns/Defaults.lua
 FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Campaigns/Defaults.lua
 --------------------------------------------------------------------------------
@@ -675,7 +1108,7 @@ function CampaignManager:CreateCampaign(campaignData)
         return false
     end
 
-    if DismountedDB.campaigns[campaignData.idl] then
+    if DismountedDB.campaigns[campaignData.id] then
         return false
     end
 
@@ -684,7 +1117,7 @@ function CampaignManager:CreateCampaign(campaignData)
     campaignData.settings = campaignData.settings or CopyTable(Defaults.DefaultSettings)
     campaignData.mounts = campaignData.mounts or {}
 
-    DismountedDB.campaigns[campaignDAta.id] = campaignData
+    DismountedDB.campaigns[campaignData.id] = campaignData
     return true
 end
 
@@ -750,5 +1183,5 @@ return CampaignManager
 
 ================================================================================
 END OF SNAPSHOT
-Total files processed: 11
+Total files processed: 19
 ================================================================================
