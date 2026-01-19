@@ -39,7 +39,7 @@ function CampaignManager:CreateCampaign(campaignData)
         return false
     end
 
-    if DismountedDB.campaigns[campaignData.idl] then
+    if DismountedDB.campaigns[campaignData.id] then
         return false
     end
 
@@ -48,7 +48,7 @@ function CampaignManager:CreateCampaign(campaignData)
     campaignData.settings = campaignData.settings or CopyTable(Defaults.DefaultSettings)
     campaignData.mounts = campaignData.mounts or {}
 
-    DismountedDB.campaigns[campaignDAta.id] = campaignData
+    DismountedDB.campaigns[campaignData.id] = campaignData
     return true
 end
 

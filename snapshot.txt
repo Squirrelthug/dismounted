@@ -3,7 +3,7 @@ CODEBASE SNAPSHOT
 ================================================================================
 Project: dismounted
 Path: /Users/squirrelthug/Software_Projects/dismounted
-Generated: 2026-01-18 15:18:13
+Generated: 2026-01-18 15:35:46
 ================================================================================
 
 DIRECTORY STRUCTURE
@@ -54,6 +54,79 @@ FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/UI/Settings.lua
 FILE: Core/OutcomeRouter.lua
 FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Core/OutcomeRouter.lua
 --------------------------------------------------------------------------------
+local ADDON_NAME, Addon = ...
+local OutcomeRouter = {}
+
+Addon.OutcomeRouter = OutcomeRouter
+
+-- localize api for performance
+local Dismount = Dismount
+local CancelPendingSpell = CancelPendingSpell
+local InCombatLockdown = InCombatLockdown
+local IsMounted = IsMounted
+
+local function EnforceDismount()
+    if IsMounted() and not InCombatLockdown() then
+        Dismount()
+    end
+end
+
+local function EnforceSpellCancel()
+    if not InCombatLockdown() then
+        CancelPendingSpell()
+    end
+end
+
+local function EmitFeedback(feedback)
+    if not feedback then
+        return
+    end
+
+    local MessageBus = Addon.MessageBus
+    if not MessageBus then
+        return
+    end
+
+    MessageBus:Dispatch(feedback)
+end
+
+function OutcomeRouter:ApplyVerdict(verdict, context)
+    if not verdict or not verdict.type then
+        return
+    end
+
+    if verdict.type == "ALLOW" then
+        return
+    end
+
+    if verdict.type == "BLOCK" then
+        EnforceSpellCancel()
+        EmitFeedback(verdict.feedback)
+        return
+    end
+
+    if verdict.type == "BLOCK_AND_DISMOUNT" then
+        EnforceSpellCancel()
+        EnforceDismount()
+        EmitFeedback(verdict.feedback)
+        return
+    end
+
+    if verdict.type == "BLOCK_AND_RELOCATE" then
+        EnforceSpellCancel()
+        EnforceDismount()
+
+        if verdict.relocation then
+            Addon.RelocationEngine:Execute(
+                verdict.relocation,
+                context
+            )
+        end
+
+        EmitFeedback(verdict.feedback)
+        return
+    end
+end
 
 
 --------------------------------------------------------------------------------
@@ -360,6 +433,106 @@ end)
 FILE: Core/Judgement.lua
 FULL PATH: /Users/squirrelthug/Software_Projects/dismounted/Core/Judgement.lua
 --------------------------------------------------------------------------------
+local ADDON_NAME, Addon = ...
+local Judgement = {}
+
+Addon.Judgement = Judgement
+
+local function MakeVerdict(type, payload)
+    return {
+        type = type,
+        reason = payload.reason,
+        severity = payload.severity,
+        relocation = payload.relocation,
+        movement = payload.movement,
+        metadata = payload.metadata or {},
+    }
+end
+
+local function EvaluateCampaignGate(context)
+    if not context.campaign.active then
+        return MakeVerdict("ALLOW", {
+            reason = "NO_ACTIVE_CAMPAIGN",
+            severity = "OFF",
+        })
+    end
+end
+
+local function EvaluateIntegrity(context)
+    if not context.integrity.safeToEnforce then
+        return MakeVerdict("ALLOW", {
+            reason = "CONTEXT_INTEGRITY_FAILURE",
+            severity = "SYSTEM",
+            metadata = {
+                issues = context.integrity.issues,
+            },
+        })
+    end
+end
+
+local function EvaluateMountAttempt(context)
+    if context.trigger.type ~= "MOUNT_ATTEMPT" then
+        return
+    end
+
+    if context.environment.indoors then
+        return MakeVerdict("BLOCK_MOUNT", {
+            reason = "INDOOR_RESTRICTION",
+            severity = context.campaign.severity,
+        })
+    end
+end
+
+local function EvaluateMountedState(context)
+    if context.trigger.type ~= "MOUNT_STATE_CHANGED" then
+        return
+    end
+
+    if not context.mount.mounted then
+        return
+    end
+
+    if context.environment.flying and context.environment.indoors then
+        return MakeVerdict("BLOCK_AND_DISMOUNT", {
+            reason = "AIRSPACE_VIOLATION",
+            severity = context.campaign.severity,
+            relocation = "AIR_DESCENT_CONE",
+        })
+    end
+end
+
+local function EvaluateMovement(context)
+    if context.trigger.type ~= "MOVEMENT_STARTED" then
+        return
+    end
+
+    if context.environment.indoors and context.movement.locomotion == "ground" then
+        return
+    end
+end
+
+local evaluators = {
+    EvaluateCampaignGate,
+    EvaluateIntegrity,
+    EvaluateMountAttempt,
+    EvaluateMountedState,
+    EvaluateMovement,
+}
+
+function Judgement.Evaluate(context)
+    for _, evaluator in ipairs(evaluators) do
+        local verdict = evaluator(context)
+        if verdict then
+            return verdict
+        end
+    end
+
+    return MakeVerdict("ALLOW", {
+        reason = "NO_RULE_TRIGGERED",
+        severity = context.campaigns.severity,
+    })
+end
+
 
 
 --------------------------------------------------------------------------------
