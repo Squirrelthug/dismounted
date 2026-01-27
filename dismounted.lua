@@ -396,12 +396,15 @@ end
 --------------------------------------------------------------------------------
 
 local function OnPlayerMounted()
+    Print("DEBUG: OnPlayerMounted() called")
     -- Get active campaign
     local campaign = GetActiveCampaign()
     if not campaign then
         DebugPrint("No active campaign - allowing mount")
         return
     end
+
+    Print("DEBUG: Campaign found: " .. campaign.name)
     
     -- Detect which mount
     local mountInfo = GetCurrentMountInfo()
@@ -469,7 +472,9 @@ end
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
         local addonName = ...
-        if addonName == ADDON_NAME then
+        print("Addon Loaded: " .. tostring(addonName))
+
+        if addonName == "dismounted" then
             InitializeDatabase()
             
             local campaign = GetActiveCampaign()
