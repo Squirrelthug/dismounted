@@ -1,4 +1,4 @@
-## Interface: 110207
+## Interface: 110207, 120000, 120001
 ## Title: Dismounted Test
 ## Notes: Test file for dismounted_test addon
 ## Author: Squirrelthug

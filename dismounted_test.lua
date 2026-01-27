@@ -15,14 +15,24 @@ frame:SetScript("OnEvent", function(self, event, ...)
             TestPrint("Addon loaded and listening")
         end
     
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local unit, castGUID, spellID = ...
+        if unit == "player" then
+            TestPrint("Spell cast succeeded. SpellID: " .. tostring(spellID))
+        end
+    
     elseif event == "PLAYER_MOUNT_DISPLAY_CHANGED" then
         if IsMounted() then
+            TestPrint("Mount detected")
+            
             -- Figure out which mount
             local mountID, spellID = nil, nil
             
             for i = 1, 40 do
                 local name, _, _, _, _, _, _, _, _, auraSpellID = UnitAura("player", i, "HELPFUL")
-                if not name then break end
+                if not name then
+                    break 
+                end
                 
                 local foundMountID = C_MountJournal.GetMountFromSpell(auraSpellID)
                 if foundMountID then
@@ -32,13 +42,14 @@ frame:SetScript("OnEvent", function(self, event, ...)
                     break
                 end
             end
-            
+        
             if not mountID then
                 TestPrint("ERROR: Mounted but couldn't detect which mount!")
             end
-            
+        
             -- Still dismount for testing
             Dismount()
+            TestPrint("Player dismounted for testing")
         end
     end
-
+end)
