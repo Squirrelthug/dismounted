@@ -1,11 +1,11 @@
 ## Interface: 120000, 120001
-## Title: Dismounted
+## Title: Dude Where's My K'arroc
 ## Notes: Campaign-based mount persistence and immersion
 ## Author: Squirrelthug
 ## Version: 0.1.0
 ## SavedVariables: DismountedDB
 ## SavedVariablesPerCharacter: DismountedCharDB
-## IconTexture: Interface\Icons\Ability_Mount_RidingHorse
+## IconTexture: 6841151
 
-Dismounted.lua
+DWMK.lua
 UI.lua

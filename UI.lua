@@ -1,11 +1,11 @@
 --[[
-    Dismounted UI - Simple settings panel
+    Dude Where's My K'arroc UI - Simple settings panel
 ]]
 
-local ADDON_NAME = "Dismounted"
+local ADDON_NAME = "DudeWheresMyKarroc"
 
 -- Get reference to main addon namespace if needed
-local frame = CreateFrame("Frame", "DismountedSettingsPanel", UIParent, "BasicFrameTemplateWithInset")
+local frame = CreateFrame("Frame", "DWMKSettingsPanel", UIParent, "BasicFrameTemplateWithInset")
 frame:SetSize(400, 350)
 frame:SetPoint("CENTER")
 frame:SetMovable(true)
@@ -18,7 +18,7 @@ frame:Hide()
 -- Title
 frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 frame.title:SetPoint("TOP", 0, -5)
-frame.title:SetText("Dismounted - Campaign Settings")
+frame.title:SetText("Dude Where's My K'arroc - Campaign Settings")
 
 -- Helper function to get active campaign
 local function GetActiveCampaign()
@@ -77,6 +77,12 @@ local groundMountName = frame:CreateFontString(nil, "OVERLAY", "GameFontHighligh
 groundMountName:SetPoint("TOPLEFT", 20, -90)
 groundMountName:SetTextColor(0.7, 0.7, 0.7)
 
+local tag = 
+        "|cffffa500D|r" .. -- orange
+        "|cffff0000W|r" .. -- red
+        "|cff00ff00M|r" .. -- green
+        "|cff0000ffK|r"    -- blue
+
 local groundButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 groundButton:SetSize(140, 25)
 groundButton:SetPoint("TOPLEFT", 20, -110)
@@ -84,19 +90,19 @@ groundButton:SetText("Set Current Mount")
 groundButton:SetScript("OnClick", function()
     local campaign = GetActiveCampaign()
     if not campaign then
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Dismounted]|r No active campaign")
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "No active campaign")
         return
     end
     
     local mountInfo = GetCurrentMountInfo()
     if not mountInfo then
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Dismounted]|r You must be mounted to set a mount")
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "You must be mounted to set a mount")
         return
     end
     
     campaign.mounts.ground = mountInfo.spellID
     groundMountName:SetText(mountInfo.name)
-    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Dismounted]|r Ground mount set to: " .. mountInfo.name)
+    DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "Ground mount set to: " .. mountInfo.name)
 end)
 
 local groundClearButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
@@ -108,7 +114,7 @@ groundClearButton:SetScript("OnClick", function()
     if campaign then
         campaign.mounts.ground = nil
         groundMountName:SetText("Not assigned")
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Dismounted]|r Ground mount cleared")
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "Ground mount cleared")
     end
 end)
 
@@ -128,19 +134,19 @@ flyingButton:SetText("Set Current Mount")
 flyingButton:SetScript("OnClick", function()
     local campaign = GetActiveCampaign()
     if not campaign then
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Dismounted]|r No active campaign")
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "No active campaign")
         return
     end
     
     local mountInfo = GetCurrentMountInfo()
     if not mountInfo then
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Dismounted]|r You must be mounted to set a mount")
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "You must be mounted to set a mount")
         return
     end
     
     campaign.mounts.flying = mountInfo.spellID
     flyingMountName:SetText(mountInfo.name)
-    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Dismounted]|r Flying mount set to: " .. mountInfo.name)
+    DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "Flying mount set to: " .. mountInfo.name)
 end)
 
 local flyingClearButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
@@ -152,7 +158,7 @@ flyingClearButton:SetScript("OnClick", function()
     if campaign then
         campaign.mounts.flying = nil
         flyingMountName:SetText("Not assigned")
-        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Dismounted]|r Flying mount cleared")
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "Flying mount cleared")
     end
 end)
 
@@ -161,7 +167,7 @@ local enforcementLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal"
 enforcementLabel:SetPoint("TOPLEFT", 20, -220)
 enforcementLabel:SetText("Enforcement Level:")
 
-local enforcementDropdown = CreateFrame("Frame", "DismountedEnforcementDropdown", frame, "UIDropDownMenuTemplate")
+local enforcementDropdown = CreateFrame("Frame", "DWMKEnforcementDropdown", frame, "UIDropDownMenuTemplate")
 enforcementDropdown:SetPoint("TOPLEFT", 10, -235)
 
 local LEVELS = {
@@ -183,7 +189,7 @@ UIDropDownMenu_Initialize(enforcementDropdown, function(self, level)
             if campaign then
                 campaign.settings.enforcementLevel = self.value
                 UIDropDownMenu_SetText(enforcementDropdown, self:GetText())
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Dismounted]|r Enforcement level set to: " .. self:GetText())
+                DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "Enforcement level set to: " .. self:GetText())
             end
         end
         UIDropDownMenu_AddButton(info)
@@ -198,14 +204,14 @@ radiusLabel:SetText("Anchor Radius:")
 local radiusValue = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 radiusValue:SetPoint("LEFT", radiusLabel, "RIGHT", 5, 0)
 
-local radiusSlider = CreateFrame("Slider", "DismountedRadiusSlider", frame, "OptionsSliderTemplate")
+local radiusSlider = CreateFrame("Slider", "DWMKRadiusSlider", frame, "OptionsSliderTemplate")
 radiusSlider:SetPoint("TOPLEFT", 20, -295)
 radiusSlider:SetMinMaxValues(10, 200)
 radiusSlider:SetValueStep(5)
 radiusSlider:SetObeyStepOnDrag(true)
 radiusSlider:SetWidth(200)
-DismountedRadiusSliderLow:SetText("10")
-DismountedRadiusSliderHigh:SetText("200")
+DWMKRadiusSliderLow:SetText("10")
+DWMKRadiusSliderHigh:SetText("200")
 radiusSlider:SetScript("OnValueChanged", function(self, value)
     local campaign = GetActiveCampaign()
     if campaign then
@@ -276,8 +282,8 @@ frame:SetScript("OnShow", function(self)
 end)
 
 -- Add slash command to show UI
-_G["SLASH_DMCONFIG1"] = "/dmconfig"
-SlashCmdList["DMCONFIG"] = function()
+_G["SLASH_DWMKCONFIG1"] = "/dwmkconfig"
+SlashCmdList["DWMKCONFIG"] = function()
     if frame:IsShown() then
         frame:Hide()
     else
@@ -286,8 +292,8 @@ SlashCmdList["DMCONFIG"] = function()
 end
 
 -- Add to existing /dm command
-local oldSlashHandler = SlashCmdList["DISMOUNTED"]
-SlashCmdList["DISMOUNTED"] = function(msg)
+local oldSlashHandler = SlashCmdList["DWMK"]
+SlashCmdList["DWMK"] = function(msg)
     if msg:lower():trim() == "config" then
         if frame:IsShown() then
             frame:Hide()
@@ -302,9 +308,9 @@ end
 -- Update help text
 local oldPrint = DEFAULT_CHAT_FRAME.AddMessage
 DEFAULT_CHAT_FRAME.AddMessage = function(self, msg, ...)
-    if msg and msg:match("Commands:") and msg:match("Dismounted") then
+    if msg and msg:match("Commands:") and msg:match("Dude Where's My K'arroc") then
         oldPrint(self, msg, ...)
-        oldPrint(self, "|cff00ff00[Dismounted]|r   /dm config - Open settings panel", ...)
+        oldPrint(self, "[" .. tag .. "] " .. "/dwmk config - Open settings panel", ...)
         return
     end
     oldPrint(self, msg, ...)

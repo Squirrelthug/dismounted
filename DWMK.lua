@@ -1,10 +1,10 @@
 --[[
-    Dismounted - Campaign-based mount persistence and immersion
+    Dude Where's My K'arroc - Campaign-based mount persistence and immersion
     Author: [Your Name]
     Version: 0.1.0
 ]]
 
-local ADDON_NAME = "Dismounted"
+local ADDON_NAME = "DudeWheresMyKarroc"
 local ADDON_VERSION = "0.1.0"
 
 -- Create main frame
@@ -31,7 +31,12 @@ local enforcementDismountInProgress = false  -- Flag to prevent anchor recording
 --------------------------------------------------------------------------------
 
 local function Print(msg)
-    DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Dismounted]|r " .. msg)
+    local tag = 
+    "|cffffa500D|r" ..
+    "|cffff0000W|r" ..
+    "|cff00ff00M|r" ..
+    "|cff0000ffK|r"
+    DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "]" .. msg)
 end
 
 local function PrintWarning(msg)
@@ -558,7 +563,7 @@ end
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
         local addonName = ...
-        if addonName == "Dismounted" then
+        if addonName == "DudeWheresMyKarroc" then
             InitializeDatabase()
             
             local campaign = GetActiveCampaign()
@@ -632,18 +637,18 @@ frame:RegisterEvent("PLAYER_LOGOUT")
 -- Slash Commands
 --------------------------------------------------------------------------------
 
-SLASH_DISMOUNTED1 = "/dismounted"
-SLASH_DISMOUNTED2 = "/dm"
+SLASH_DWMK1 = "/dwmk"
+SLASH_DWMK2 = "/dude"
 
-SlashCmdList["DISMOUNTED"] = function(msg)
+SlashCmdList["DWMK"] = function(msg)
     msg = msg:lower():trim()
     
     if msg == "" or msg == "help" then
         Print("Commands:")
-        Print("  /dm status - Show current campaign status")
-        Print("  /dm level <0-3> - Set enforcement level")
-        Print("  /dm radius <10-200> - Set anchor radius in yards")
-        Print("  /dm config - Open settings panel")
+        Print("  /dwmk status - Show current campaign status")
+        Print("  /dwmk level <0-3> - Set enforcement level")
+        Print("  /dwmk radius <10-200> - Set anchor radius in yards")
+        Print("  /dwmk config - Open settings panel")
         
     elseif msg == "status" then
         local campaign = GetActiveCampaign()
@@ -707,4 +712,4 @@ SlashCmdList["DISMOUNTED"] = function(msg)
     end
 end
 
-Print("Type /dm help for commands")
+Print("Type /dwmk help for commands")
