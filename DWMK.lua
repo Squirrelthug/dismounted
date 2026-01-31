@@ -4,7 +4,7 @@
     Version: 0.1.0
 ]]
 
-local ADDON_NAME = "DudeWheresMyKarroc"
+local ADDON_NAME = ...
 local ADDON_VERSION = "0.1.0"
 
 -- Create main frame
@@ -43,10 +43,6 @@ local function PrintWarning(msg)
     UIErrorsFrame:AddMessage(msg, 1.0, 0.8, 0.0, 1.0, 3)
 end
 
-local function DebugPrint(msg)
-    -- For development - can add a debug flag later
-    -- DEFAULT_CHAT_FRAME:AddMessage("|cff88ccff[Dismounted Debug]|r " .. msg)
-end
 
 --------------------------------------------------------------------------------
 -- Database Management
@@ -228,7 +224,6 @@ local function GetCurrentMountInfo()
         local mountID = C_MountJournal.GetMountFromSpell(lastMountSpellID)
         if mountID then
             local name, spellID, icon = C_MountJournal.GetMountInfoByID(mountID)
-            Print("DEBUG: Using fallback lastMountSpellID: " .. lastMountSpellID)
             return {
                 mountID = mountID,
                 spellID = lastMountSpellID,
@@ -246,42 +241,33 @@ end
 --------------------------------------------------------------------------------
 
 local function HandleViolation(reason, campaign, mountInfo)
-    Print("DEBUG: HandleViolation called - reason: " .. reason)
     
     local level = campaign.settings.enforcementLevel or 1
     
-    Print("DEBUG: Enforcement level: " .. level)
     
     if level == 0 then
         -- Off - do nothing
-        Print("DEBUG: Level 0 (Off) - no action")
         return
         
     elseif level == 1 then
         -- Permissive - warn only (no dismount, no flag)
-        Print("DEBUG: Level 1 (Permissive) - warning only")
-        Print("Warning: " .. reason)
         
     elseif level == 2 then
         -- Balanced - warn then dismount after 3 seconds
-        Print("DEBUG: Level 2 (Balanced) - 3 second grace period")
         PrintWarning("Warning: " .. reason)
         Print("Grace period: 3 seconds to dismount voluntarily...")
         
         C_Timer.After(3, function()
             if IsMounted() then
-                Print("DEBUG: Grace period expired - setting enforcement flag and dismounting")
                 enforcementDismountInProgress = true  -- SET FLAG BEFORE DISMOUNT
                 Dismount()
                 Print("Dismounted after grace period")
             else
-                Print("DEBUG: Player already dismounted during grace period")
             end
         end)
         
     elseif level == 3 then
         -- Strict - immediate dismount
-        Print("DEBUG: Level 3 (Strict) - immediate dismount")
         enforcementDismountInProgress = true  -- SET FLAG BEFORE DISMOUNT
         Dismount()
         PrintWarning("Dismounted: " .. reason)
@@ -289,32 +275,22 @@ local function HandleViolation(reason, campaign, mountInfo)
 end
 
 local function CheckMountRestrictions(campaign, mountInfo)
-    Print("DEBUG: === CheckMountRestrictions START ===")
-    Print("DEBUG: Mount name: " .. tostring(mountInfo.name))
-    Print("DEBUG: Mount spellID: " .. tostring(mountInfo.spellID))
     
     -- Check 1: Is this mount assigned to the campaign?
     local isAssigned = false
     local assignedSlot = nil
     
-    Print("DEBUG: Checking mount assignments...")
-    Print("DEBUG: Ground slot: " .. tostring(campaign.mounts.ground))
-    Print("DEBUG: Flying slot: " .. tostring(campaign.mounts.flying))
     
     for slotName, slotSpellID in pairs(campaign.mounts) do
-        Print("DEBUG: Comparing " .. tostring(slotSpellID) .. " with " .. tostring(mountInfo.spellID))
         if slotSpellID == mountInfo.spellID then
             isAssigned = true
             assignedSlot = slotName
-            Print("DEBUG: MATCH! Mount assigned to: " .. slotName)
             break
         end
     end
     
-    Print("DEBUG: isAssigned = " .. tostring(isAssigned))
     
     if not isAssigned then
-        Print("DEBUG: Mount not assigned - checking if ANY mounts assigned...")
         -- Check if ANY mounts are assigned
         local hasAnyMounts = false
         for _, spellID in pairs(campaign.mounts) do
@@ -324,7 +300,6 @@ local function CheckMountRestrictions(campaign, mountInfo)
             end
         end
         
-        Print("DEBUG: hasAnyMounts = " .. tostring(hasAnyMounts))
         
         if not hasAnyMounts then
             -- No mounts assigned yet - inform but allow
@@ -333,7 +308,6 @@ local function CheckMountRestrictions(campaign, mountInfo)
             return true
         else
             -- Mounts ARE assigned, but this isn't one of them
-            Print("DEBUG: Calling HandleViolation - mount not in campaign")
             HandleViolation(
                 "'" .. mountInfo.name .. "' is not assigned to campaign '" .. campaign.name .. "'",
                 campaign,
@@ -343,12 +317,10 @@ local function CheckMountRestrictions(campaign, mountInfo)
         end
     end
     
-    Print("DEBUG: Mount is assigned, checking for anchor...")
     
     -- Check 2: Does this mount have an anchor?
     local anchor = campaign.anchors[mountInfo.spellID]
     
-    Print("DEBUG: anchor exists: " .. tostring(anchor ~= nil))
     
     if not anchor then
         -- First use of this mount in this campaign
@@ -357,12 +329,10 @@ local function CheckMountRestrictions(campaign, mountInfo)
         return true
     end
     
-    Print("DEBUG: Anchor found, checking distance...")
     
     -- Check 3: Are we within range of the anchor?
     local currentMapID, currentX, currentY = GetCurrentPosition()
     
-    Print("DEBUG: Current position - mapID: " .. tostring(currentMapID) .. ", x: " .. tostring(currentX) .. ", y: " .. tostring(currentY))
     
     if not currentMapID then
         Print("Warning: Could not determine your current position")
@@ -373,11 +343,9 @@ local function CheckMountRestrictions(campaign, mountInfo)
     local anchorX = anchor[2]
     local anchorY = anchor[3]
     
-    Print("DEBUG: Anchor position - mapID: " .. tostring(anchorMapID) .. ", x: " .. tostring(anchorX) .. ", y: " .. tostring(anchorY))
     
     -- Different maps = not within range
     if currentMapID ~= anchorMapID then
-        Print("DEBUG: Different maps detected!")
         local currentMapName = GetMapInfo(currentMapID)
         local anchorMapName = GetMapInfo(anchorMapID)
         
@@ -400,12 +368,10 @@ local function CheckMountRestrictions(campaign, mountInfo)
         return false
     end
     
-    Print("DEBUG: Same map, calculating distance...")
     
     -- Same map - calculate distance using actual map dimensions
     local mapWidth, mapHeight = C_Map.GetMapWorldSize(currentMapID)
     
-    Print("DEBUG: Map dimensions - width: " .. tostring(mapWidth) .. ", height: " .. tostring(mapHeight))
     
     if not mapWidth or not mapHeight then
         Print("Warning: Could not determine map size, allowing mount")
@@ -417,14 +383,11 @@ local function CheckMountRestrictions(campaign, mountInfo)
     local dy = (currentY - anchorY) * mapHeight
     local distance = math.sqrt(dx * dx + dy * dy)
     
-    Print("DEBUG: Calculated distance: " .. string.format("%.1f", distance) .. " yards")
     
     local radius = campaign.settings.anchorRadius or DEFAULT_ANCHOR_RADIUS
     
-    Print("DEBUG: Allowed radius: " .. radius .. " yards")
     
     if distance > radius then
-        Print("DEBUG: Distance exceeds radius - calling HandleViolation")
         local mapName = GetMapInfo(currentMapID)
         
         Print("Your '" .. mountInfo.name .. "' is too far away:")
@@ -447,7 +410,6 @@ local function CheckMountRestrictions(campaign, mountInfo)
     end
     
     -- All checks passed
-    Print("DEBUG: All checks passed - within " .. string.format("%.0f", distance) .. " yards of anchor")
     return true
 end
 
@@ -456,27 +418,20 @@ end
 --------------------------------------------------------------------------------
 
 local function OnPlayerMounted()
-    Print("DEBUG: OnPlayerMounted() called")
-    Print("DEBUG: lastMountSpellID = " .. tostring(lastMountSpellID))
     
     -- Get active campaign
     local campaign = GetActiveCampaign()
     if not campaign then
-        Print("DEBUG: No active campaign - allowing mount")
         return
     end
     
-    Print("DEBUG: Campaign found: " .. campaign.name)
     
     -- Detect which mount
     local mountInfo = GetCurrentMountInfo()
-    Print("DEBUG: GetCurrentMountInfo returned: " .. tostring(mountInfo))
     if not mountInfo then
-        Print("DEBUG: Could not detect mount - returning")
         return
     end
     
-    Print("DEBUG: Mount info retrieved successfully")
     
     -- Check restrictions
     CheckMountRestrictions(campaign, mountInfo)
@@ -486,55 +441,42 @@ local function OnPlayerMounted()
 end
 
 local function OnPlayerDismounted()
-    Print("DEBUG: OnPlayerDismounted() called")
-    Print("DEBUG: enforcementDismountInProgress = " .. tostring(enforcementDismountInProgress))
     
     -- Check if this was an enforcement dismount
     if enforcementDismountInProgress then
-        Print("DEBUG: Enforcement dismount detected - NOT recording anchor")
         enforcementDismountInProgress = false  -- Clear flag
         lastMountSpellID = nil  -- Clear tracked mount
-        Print("DEBUG: Flag cleared, exiting OnPlayerDismounted")
         return  -- Exit early, don't record anchor
     end
     
-    Print("DEBUG: Normal dismount - proceeding to record anchor")
     
     -- Get active campaign
     local campaign = GetActiveCampaign()
     if not campaign then
-        Print("DEBUG: No active campaign")
         return
     end
     
-    Print("DEBUG: Campaign found: " .. campaign.name)
     
     -- Try to detect which mount we were on
     -- Use lastMountSpellID from the cast event
     if not lastMountSpellID then
-        Print("DEBUG: lastMountSpellID is nil - cannot determine mount")
         return
     end
     
-    Print("DEBUG: lastMountSpellID = " .. lastMountSpellID)
     
     local mountID = C_MountJournal.GetMountFromSpell(lastMountSpellID)
     if not mountID then
-        Print("DEBUG: Mount spell ID " .. lastMountSpellID .. " not recognized by C_MountJournal")
         return
     end
     
-    Print("DEBUG: MountID resolved: " .. mountID)
     
     -- Get mount name for messaging
     local mountName = C_MountJournal.GetMountInfoByID(mountID)
     
-    Print("DEBUG: Mount name: " .. tostring(mountName))
     
     -- Get current position
     local mapID, x, y = GetCurrentPosition()
     
-    Print("DEBUG: Current position - mapID: " .. tostring(mapID) .. ", x: " .. tostring(x) .. ", y: " .. tostring(y))
     
     if not mapID or not x or not y then
         Print("Warning: Could not record dismount location")
@@ -544,7 +486,6 @@ local function OnPlayerDismounted()
     -- Record anchor
     campaign.anchors[lastMountSpellID] = {mapID, x, y, time()}
     
-    Print("DEBUG: Anchor recorded in campaign.anchors[" .. lastMountSpellID .. "]")
     
     local mapName = GetMapInfo(mapID)
     local coords = FormatCoordinates(x, y)
@@ -553,7 +494,6 @@ local function OnPlayerDismounted()
     
     -- Clear the tracked spell
     lastMountSpellID = nil
-    Print("DEBUG: lastMountSpellID cleared")
 end
 
 --------------------------------------------------------------------------------
@@ -563,7 +503,7 @@ end
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
         local addonName = ...
-        if addonName == "DudeWheresMyKarroc" then
+        if addonName == ADDON_NAME then
             InitializeDatabase()
             
             local campaign = GetActiveCampaign()
@@ -586,41 +526,33 @@ frame:SetScript("OnEvent", function(self, event, ...)
                 if mountID then
                     -- Track this for dismount event
                     lastMountSpellID = spellID
-                    Print("DEBUG: UNIT_SPELLCAST_SUCCEEDED - Mount spell tracked: " .. spellID)
                 end
             end
         end
     
     elseif event == "PLAYER_MOUNT_DISPLAY_CHANGED" then
-        Print("DEBUG: PLAYER_MOUNT_DISPLAY_CHANGED fired")
         
         -- Ignore taxis/flight paths
         if UnitOnTaxi("player") then
-            Print("DEBUG: Player on taxi - ignoring")
             return
         end
         
         if IsMounted() then
-            Print("DEBUG: Player is mounted - calling OnPlayerMounted()")
             OnPlayerMounted()
         else
-            Print("DEBUG: Player is not mounted - calling OnPlayerDismounted()")
             OnPlayerDismounted()
         end
     
     elseif event == "PLAYER_LOGOUT" then
-        Print("DEBUG: PLAYER_LOGOUT event")
         
         -- If mounted on logout, record the position
         if IsMounted() then
-            Print("DEBUG: Player mounted during logout - recording position")
             
             local campaign = GetActiveCampaign()
             if campaign and lastMountSpellID then
                 local mapID, x, y = GetCurrentPosition()
                 if mapID and x and y then
                     campaign.anchors[lastMountSpellID] = {mapID, x, y, time()}
-                    Print("DEBUG: Mount anchor saved on logout")
                 end
             end
         end
