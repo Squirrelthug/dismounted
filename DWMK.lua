@@ -86,20 +86,37 @@ local function InitializeDatabase()
     end
     
     -- Ensure default campaign exists
-    if not DismountedDB.campaigns["default"] then
+    local hasCampaigns = false
+    for _ in pairs(DismountedDB.campaigns) do
+        hasCampaigns = true
+        break
+    end
+
+    if not hasCampaigns then
         DismountedDB.campaigns["default"] = CreateDefaultCampaign()
         Print("Default campaign created")
     end
     
+
     -- Ensure character has valid active campaign
-    if not DismountedCharDB.activeCampaign then
-        DismountedCharDB.activeCampaign = "default"
-    end
-    
-    -- Validate active campaign exists
-    if not DismountedDB.campaigns[DismountedCharDB.activeCampaign] then
-        Print("Warning: Active campaign not found, switching to default")
-        DismountedCharDB.activeCampaign = "default"
+    if not DismountedDB.activeCampaign or not DismountedDB.campaigns[DismountedCharDB.activeCampaign] then
+        -- find the first available campaign
+        local firstCampaignID = nil
+        for firstCampaignID in pairs(DismountedDB.campaigns) do
+            firstCampaignID = firstCampaignID
+            break
+        end
+
+        if firstCampaignID then
+            if DismountedDB.activeCampaign and DismountedCharDB.activeCampaign ~= firstCampaignID then
+                Print("Warning: Active campaign not found, switching to " .. firstCampaignID
+            end
+            DismountedCharDB.activeCampaign = firstCampaignID
+        else
+            dismountedDB.campaigns["default"] = CreateDefaultCampaign()
+            DismountedCharDB.activeCampaign = "default"
+            Print("Created fallback default campaign")
+        end
     end
 end
 
@@ -494,6 +511,16 @@ local function OnPlayerDismounted()
     
     -- Clear the tracked spell
     lastMountSpellID = nil
+end
+
+--------------------------------------------------------------------------------
+-- Exposing campaign creation function for UI
+--------------------------------------------------------------------------------
+
+DWMK_CreateCampaign = function()
+    local campaign = CreateDefaultCampaign()
+    campaign.name = name or "New Campaign"
+    return campaign
 end
 
 --------------------------------------------------------------------------------

@@ -3,10 +3,11 @@
 ]]
 
 local ADDON_NAME = "DudeWheresMyKarroc"
+local UpdateUI
 
 -- Get reference to main addon namespace if needed
 local frame = CreateFrame("Frame", "DWMKSettingsPanel", UIParent, "BasicFrameTemplateWithInset")
-frame:SetSize(400, 350)
+frame:SetSize(400, 450)
 frame:SetPoint("CENTER")
 frame:SetMovable(true)
 frame:EnableMouse(true)
@@ -61,12 +62,25 @@ local function GetCurrentMountInfo()
 end
 
 -- Campaign name label
+local campaignSectionlabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+campaignSectionlabel:SetPoint("TOPLEFT", 20, -35)
+campaignSectionlabel:SetText("Campaign Management")
+
 local campaignLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 campaignLabel:SetPoint("TOPLEFT", 20, -40)
 campaignLabel:SetText("Active Campaign:")
 
 local campaignName = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 campaignName:SetPoint("LEFT", campaignLabel, "RIGHT", 5, 0)
+
+-- Campaign Selection Dropdown
+local activeCampaignLabel = frame:CreateFontString(nil, "OVERLAY", GameFontNormal")
+activeCampaignLabel:SetPoint("TOPLEFT", 20, -55)
+activeCampaignLabel:SetText("Active Campaign:")
+
+local campaignDropdown = CreateFrame("Frame", "DWMKCampaignDropdown", frame, "UIDropDownMenuTemplate")
+campaignDropdown:SetPoint("TOPLEFT", 10, -70)
+UIDropDownMenu_SetWidth(campaignDropdown, 180)
 
 -- Ground Mount section
 local groundLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -274,6 +288,30 @@ local function UpdateUI()
     local radius = campaign.settings.anchorRadius or 30
     radiusSlider:SetValue(radius)
     radiusValue:SetText(radius .. " yards")
+end
+
+local function InitializeCampaignDropdown()
+    UIDropDownMenu_Initialize(campaignDropdown, function(self, level)
+        if not DismountedDB or not DismountedDB.campaigns then
+            return
+        end
+
+        local info = UIDropDownMenu_CreateInfo()
+        local currentCampaignID = DismountedCharDB and DismountedCharDB.activeCampaign
+
+        for campaignID, campaignData in pairs(DismountedDB.campaigns) do
+            info.text = campaignData.name
+            info.value = campaignID
+            info.checked = (campaignID == currentCampaignID)
+            info.func = function(self)
+                DismountedCharDB.activeCampaign = self.value
+                UIDropDownMenu_SetText(campaignDropdown, DismountedDB.campaigns[self.value].name)
+                DEFAULT_CHAT_FRAME:AddMessage("[".. tag .."] Switched to campaign: " .. DismountedDB.campaigns[self.value].name)
+                UpdateUI()
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
 end
 
 -- Show/hide functions
