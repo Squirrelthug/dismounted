@@ -48,9 +48,9 @@ end
 -- Database Management
 --------------------------------------------------------------------------------
 
-local function CreateDefaultCampaign()
+local function CreateDefaultCampaign(name)
     return {
-        name = "Default Campaign",
+        name = name or "Default Campaign",
         created = time(),
         lastUsed = time(),
         
@@ -99,21 +99,21 @@ local function InitializeDatabase()
     
 
     -- Ensure character has valid active campaign
-    if not DismountedDB.activeCampaign or not DismountedDB.campaigns[DismountedCharDB.activeCampaign] then
+     if not DismountedCharDB.activeCampaign or not DismountedDB.campaigns[DismountedCharDB.activeCampaign] then
         -- find the first available campaign
         local firstCampaignID = nil
-        for firstCampaignID in pairs(DismountedDB.campaigns) do
+        for campaignID in pairs(DismountedDB.campaigns) do
             firstCampaignID = campaignID
             break
         end
 
         if firstCampaignID then
-            if DismountedDB.activeCampaign and DismountedCharDB.activeCampaign ~= firstCampaignID then
+            if DismountedCharDB.activeCampaign and DismountedCharDB.activeCampaign ~= firstCampaignID then
                 Print("Warning: Active campaign not found, switching to " .. firstCampaignID)
             end
             DismountedCharDB.activeCampaign = firstCampaignID
         else
-            dismountedDB.campaigns["default"] = CreateDefaultCampaign()
+            DismountedDB.campaigns["default"] = CreateDefaultCampaign()
             DismountedCharDB.activeCampaign = "default"
             Print("Created fallback default campaign")
         end
@@ -209,7 +209,7 @@ local function GetCurrentMountInfo()
         return nil
     end
     
-    -- Use new C_UnitAuras API (Midnight pre-patch compatible)
+    -- Use new C_UnitAuras API
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         for i = 1, 40 do
             local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
@@ -517,10 +517,8 @@ end
 -- Exposing campaign creation function for UI
 --------------------------------------------------------------------------------
 
-DWMK_CreateCampaign = function()
-    local campaign = CreateDefaultCampaign()
-    campaign.name = name or "New Campaign"
-    return campaign
+DWMK_CreateCampaign = function(name)
+    return CreateDefaultCampaign(name)
 end
 
 --------------------------------------------------------------------------------
@@ -667,7 +665,7 @@ SlashCmdList["DWMK"] = function(msg)
         Print("Anchor radius set to: " .. radius .. " yards")
         
     else
-        Print("Unknown command. Type /dm help for commands.")
+        Print("Unknown command. Type /dwmk help for commands.")
     end
 end
 

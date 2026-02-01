@@ -61,17 +61,19 @@ local function GetCurrentMountInfo()
     return nil
 end
 
--- Campaign name label
+local tag = 
+        "|cffffa500D|r" .. -- orange
+        "|cffff0000W|r" .. -- red
+        "|cff00ff00M|r" .. -- green
+        "|cff0000ffK|r"    -- blue
+
+--------------------------------------------------------------------------------
+-- Campaign Management Section
+--------------------------------------------------------------------------------
+
 local campaignSectionLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-campaignSectionLabel:SetPoint("TOPLEFT", 20, -35)
+campaignSectionLabel:SetPoint("TOPLEFT", 20, -30)
 campaignSectionLabel:SetText("Campaign Management")
-
-local campaignLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-campaignLabel:SetPoint("TOPLEFT", 20, -40)
-campaignLabel:SetText("Active Campaign:")
-
-local campaignName = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-campaignName:SetPoint("LEFT", campaignLabel, "RIGHT", 5, 0)
 
 -- Campaign Selection Dropdown
 local activeCampaignLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -82,24 +84,52 @@ local campaignDropdown = CreateFrame("Frame", "DWMKCampaignDropdown", frame, "UI
 campaignDropdown:SetPoint("TOPLEFT", 10, -70)
 UIDropDownMenu_SetWidth(campaignDropdown, 180)
 
+local deleteCampaignButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+deleteCampaignButton:SetSize(100, 22)
+deleteCampaignButton:SetPoint("TOPLEFT", 250, -75)
+deleteCampaignButton:SetText("Delete Campaign")
+
+-- New Campaign Creation
+local newCampaignEditBox = CreateFrame("EditBox", "DWMKNewCampaignEditBox", frame, "InputBoxTemplate")
+newCampaignEditBox:SetSize(150, 20)
+newCampaignEditBox:SetPoint("TOPLEFT", 25, -105)
+newCampaignEditBox:SetAutoFocus(false)
+newCampaignEditBox:SetMaxLetters(30)
+newCampaignEditBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+newCampaignEditBox:SetScript("OnEnterPressed", function(self)
+    self:ClearFocus()
+end)
+
+local createCampaignButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+createCampaignButton:SetSize(70, 22)
+createCampaignButton:SetPoint("LEFT", newCampaignEditBox, "RIGHT", 10, 0)
+createCampaignButton:SetText("Create")
+
+--------------------------------------------------------------------------------
+-- Separator 1
+--------------------------------------------------------------------------------
+
+local separator = frame:CreateTexture(nil, "ARTWORK")
+separator:SetSize(360, 1)
+separator:SetPoint("TOPLEFT", 20, -135)
+separator:SetColorTexture(0.5, 0.5, 0.5, 0.5)
+
+--------------------------------------------------------------------------------
+-- Mount Assignment Section
+--------------------------------------------------------------------------------
+
 -- Ground Mount section
 local groundLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-groundLabel:SetPoint("TOPLEFT", 20, -70)
+groundLabel:SetPoint("TOPLEFT", 20, -150)
 groundLabel:SetText("Ground Mount:")
 
 local groundMountName = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-groundMountName:SetPoint("TOPLEFT", 20, -90)
+groundMountName:SetPoint("TOPLEFT", 20, -170)
 groundMountName:SetTextColor(0.7, 0.7, 0.7)
-
-local tag = 
-        "|cffffa500D|r" .. -- orange
-        "|cffff0000W|r" .. -- red
-        "|cff00ff00M|r" .. -- green
-        "|cff0000ffK|r"    -- blue
 
 local groundButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 groundButton:SetSize(140, 25)
-groundButton:SetPoint("TOPLEFT", 20, -110)
+groundButton:SetPoint("TOPLEFT", 20, -190)
 groundButton:SetText("Set Current Mount")
 groundButton:SetScript("OnClick", function()
     local campaign = GetActiveCampaign()
@@ -134,16 +164,16 @@ end)
 
 -- Flying Mount section
 local flyingLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-flyingLabel:SetPoint("TOPLEFT", 20, -145)
+flyingLabel:SetPoint("TOPLEFT", 20, -225)
 flyingLabel:SetText("Flying Mount:")
 
 local flyingMountName = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-flyingMountName:SetPoint("TOPLEFT", 20, -165)
+flyingMountName:SetPoint("TOPLEFT", 20, -245)
 flyingMountName:SetTextColor(0.7, 0.7, 0.7)
 
 local flyingButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 flyingButton:SetSize(140, 25)
-flyingButton:SetPoint("TOPLEFT", 20, -185)
+flyingButton:SetPoint("TOPLEFT", 20, -265)
 flyingButton:SetText("Set Current Mount")
 flyingButton:SetScript("OnClick", function()
     local campaign = GetActiveCampaign()
@@ -176,14 +206,26 @@ flyingClearButton:SetScript("OnClick", function()
     end
 end)
 
+--------------------------------------------------------------------------------
+-- Separator 2
+--------------------------------------------------------------------------------
+
+local separator2 = frame:CreateTexture(nil, "ARTWORK")
+separator2:SetSize(360, 1)
+-separator2:SetPoint("TOPLEFT", 20, -300)
+separator2:SetColorTexture(0.5, 0.5, 0.5, 0.5)
+
+--------------------------------------------------------------------------------
+-- Settings Section
+--------------------------------------------------------------------------------
 
 -- Enforcement Level dropdown
 local enforcementLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-enforcementLabel:SetPoint("TOPLEFT", 20, -220)
+enforcementLabel:SetPoint("TOPLEFT", 20, -315)
 enforcementLabel:SetText("Enforcement Level:")
 
 local enforcementDropdown = CreateFrame("Frame", "DWMKEnforcementDropdown", frame, "UIDropDownMenuTemplate")
-enforcementDropdown:SetPoint("TOPLEFT", 10, -235)
+enforcementDropdown:SetPoint("TOPLEFT", 10, -330)
 
 local LEVELS = {
     {value = 0, text = "Off (No enforcement)"},
@@ -213,14 +255,14 @@ end)
 
 -- Anchor Radius slider
 local radiusLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-radiusLabel:SetPoint("TOPLEFT", 20, -275)
+radiusLabel:SetPoint("TOPLEFT", 20, -370)
 radiusLabel:SetText("Anchor Radius:")
 
 local radiusValue = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 radiusValue:SetPoint("LEFT", radiusLabel, "RIGHT", 5, 0)
 
 local radiusSlider = CreateFrame("Slider", "DWMKRadiusSlider", frame, "OptionsSliderTemplate")
-radiusSlider:SetPoint("TOPLEFT", 20, -295)
+radiusSlider:SetPoint("TOPLEFT", 20, -390)
 radiusSlider:SetMinMaxValues(10, 200)
 radiusSlider:SetValueStep(5)
 radiusSlider:SetObeyStepOnDrag(true)
@@ -235,20 +277,19 @@ radiusSlider:SetScript("OnValueChanged", function(self, value)
     end
 end)
 
+--------------------------------------------------------------------------------
 -- Update UI function
+--------------------------------------------------------------------------------
+
 local function UpdateUI()
     local campaign = GetActiveCampaign()
     
     if not campaign then
-        campaignName:SetText("None")
         groundMountName:SetText("No active campaign")
         flyingMountName:SetText("No active campaign")
         radiusValue:SetText("N/A")
         return
     end
-    
-    -- Campaign name
-    campaignName:SetText(campaign.name)
     
     -- Ground mount
     if campaign.mounts.ground then
@@ -291,6 +332,10 @@ local function UpdateUI()
     radiusValue:SetText(radius .. " yards")
 end
 
+--------------------------------------------------------------------------------
+-- Campaign Dropdown Initialization
+--------------------------------------------------------------------------------
+
 local function InitializeCampaignDropdown()
     UIDropDownMenu_Initialize(campaignDropdown, function(self, level)
         if not DismountedDB or not DismountedDB.campaigns then
@@ -315,20 +360,10 @@ local function InitializeCampaignDropdown()
     end)
 end
 
-local newCampaignEditBox = CreateFrame("EditBox", "DWMKNewCampaignEditBox", frame, "InputBoxTemplate")
-newCampaignEditBox:SetSize(150, 20)
-newCampaignEditBox:SetPoint("TOPLEFT", 20, -118)
-newCampaignEditBox:SetAutoFocus(false)
-newCampaignEditBox:SetMaxLetters(30)
-newCampaignEditBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-newCampaignEditBox:SetScript("OnEnterPressed", function(self)
-    self:ClearFocus()
-end)
+--------------------------------------------------------------------------------
+-- Button Click Handlers
+--------------------------------------------------------------------------------
 
-local createCampaignButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-createCampaignButton:SetSize(70, 22)
-createCampaignButton:SetPoint("LEFT", newCampaignEditBox, "RIGHT", 10, 0)
-createCampaignButton:SetText("Create")
 createCampaignButton:SetScript("OnClick", function()
     local newName = newCampaignEditBox:GetText():trim()
 
@@ -354,13 +389,13 @@ createCampaignButton:SetScript("OnClick", function()
         newCampaign = DWMK_CreateCampaign(newName)
     else
         -- fallback if function not available
-        Print("WARNING[UI.lua]: local newCampaign fallback triggered")
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] WARNING[UI.lua]: local newCampaign fallback triggered")
         newCampaign = {
             name = newName,
             created = time(),
             lastUsed = time(),
             settings = {
-                enforcementlevel = 1,
+                enforcementLevel = 1,
                 anchorRadius = 30,
             },
             mounts = {
@@ -384,10 +419,6 @@ createCampaignButton:SetScript("OnClick", function()
     DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] Created and switched to campaign: " .. newName)
 end)
 
-local deleteCampaignButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-deleteCampaignButton:SetSize(100, 22)
-deleteCampaignButton:SetPoint("TOPLEFT", 250, -75)
-deleteCampaignButton:SetText("Delete Campaign")
 deleteCampaignButton:SetScript("OnClick", function()
     local currentCampaignID = DismountedCharDB and DismountedCharDB.activeCampaign
 
@@ -456,24 +487,17 @@ deleteCampaignButton:SetScript("OnClick", function()
 end)
 
 --------------------------------------------------------------------------------
--- Separator
+-- Show/hide functions
 --------------------------------------------------------------------------------
 
-local separator = frame:CreateTexture(nil, "ARTWORK")
-separator:SetSize(360, 1)
-separator:SetPoint("TOPLEFT", 20, -145)
-separator:SetColorTexture(0.5, 0.5, 0.5, 0.5)
-
-local separator2 = frame:CreateTexture(nil, "ARTWORK")
-separator2:SetSize(360, 1)
-separator2:SetPoint("TOP_LEFT", 20, -310)
-separator2:SetColorTexture(0.5, 0.5, 0.5, 0.5)
-
--- Show/hide functions
 frame:SetScript("OnShow", function(self)
     InitializeCampaignDropdown()
     UpdateUI()
 end)
+
+--------------------------------------------------------------------------------
+-- Slash Commands
+--------------------------------------------------------------------------------
 
 -- Add slash command to show UI
 _G["SLASH_DWMKCONFIG1"] = "/dwmkconfig"
@@ -485,7 +509,7 @@ SlashCmdList["DWMKCONFIG"] = function()
     end
 end
 
--- Add to existing /dm command
+-- Add to existing /dwmk command by wrapping the original handler
 local oldSlashHandler = SlashCmdList["DWMK"]
 SlashCmdList["DWMK"] = function(msg)
     if msg:lower():trim() == "config" then
@@ -494,18 +518,7 @@ SlashCmdList["DWMK"] = function(msg)
         else
             frame:Show()
         end
-    else
+    elseif oldSlashHandler then
         oldSlashHandler(msg)
     end
-end
-
--- Update help text
-local oldPrint = DEFAULT_CHAT_FRAME.AddMessage
-DEFAULT_CHAT_FRAME.AddMessage = function(self, msg, ...)
-    if msg and msg:match("Commands:") and msg:match("Dude Where's My K'arroc") then
-        oldPrint(self, msg, ...)
-        oldPrint(self, "[" .. tag .. "] " .. "/dwmk config - Open settings panel", ...)
-        return
-    end
-    oldPrint(self, msg, ...)
 end
