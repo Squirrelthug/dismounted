@@ -103,13 +103,13 @@ local function InitializeDatabase()
         -- find the first available campaign
         local firstCampaignID = nil
         for firstCampaignID in pairs(DismountedDB.campaigns) do
-            firstCampaignID = firstCampaignID
+            firstCampaignID = campaignID
             break
         end
 
         if firstCampaignID then
             if DismountedDB.activeCampaign and DismountedCharDB.activeCampaign ~= firstCampaignID then
-                Print("Warning: Active campaign not found, switching to " .. firstCampaignID
+                Print("Warning: Active campaign not found, switching to " .. firstCampaignID)
             end
             DismountedCharDB.activeCampaign = firstCampaignID
         else

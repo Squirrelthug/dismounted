@@ -62,9 +62,9 @@ local function GetCurrentMountInfo()
 end
 
 -- Campaign name label
-local campaignSectionlabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-campaignSectionlabel:SetPoint("TOPLEFT", 20, -35)
-campaignSectionlabel:SetText("Campaign Management")
+local campaignSectionLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+campaignSectionLabel:SetPoint("TOPLEFT", 20, -35)
+campaignSectionLabel:SetText("Campaign Management")
 
 local campaignLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 campaignLabel:SetPoint("TOPLEFT", 20, -40)
@@ -74,7 +74,7 @@ local campaignName = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 campaignName:SetPoint("LEFT", campaignLabel, "RIGHT", 5, 0)
 
 -- Campaign Selection Dropdown
-local activeCampaignLabel = frame:CreateFontString(nil, "OVERLAY", GameFontNormal")
+local activeCampaignLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 activeCampaignLabel:SetPoint("TOPLEFT", 20, -55)
 activeCampaignLabel:SetText("Active Campaign:")
 
@@ -175,6 +175,7 @@ flyingClearButton:SetScript("OnClick", function()
         DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] " .. "Flying mount cleared")
     end
 end)
+
 
 -- Enforcement Level dropdown
 local enforcementLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -314,8 +315,163 @@ local function InitializeCampaignDropdown()
     end)
 end
 
+local newCampaignEditBox = CreateFrame("EditBox", "DWMKNewCampaignEditBox", frame, "InputBoxTemplate")
+newCampaignEditBox:SetSize(150, 20)
+newCampaignEditBox:SetPoint("TOPLEFT", 20, -118)
+newCampaignEditBox:SetAutoFocus(false)
+newCampaignEditBox:SetMaxLetters(30)
+newCampaignEditBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+newCampaignEditBox:SetScript("OnEnterPressed", function(self)
+    self:ClearFocus()
+end)
+
+local createCampaignButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+createCampaignButton:SetSize(70, 22)
+createCampaignButton:SetPoint("LEFT", newCampaignEditBox, "RIGHT", 10, 0)
+createCampaignButton:SetText("Create")
+createCampaignButton:SetScript("OnClick", function()
+    local newName = newCampaignEditBox:GetText():trim()
+
+    if newName == "" then        
+        DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] Please enter a campaign name")
+        return
+    end
+
+    -- generate unique id
+    local campaignID = newName:lower():gsub("%s+", "_"):gsub("[^%w_]", "")
+
+    -- ensure unique id
+    local baseID = campaignID
+    local counter = 1
+    while DismountedDB.campaigns[campaignID] do
+        campaignID = baseID .. "_" .. counter
+        counter = counter + 1
+    end
+
+    -- create new campaign using exposed function
+    local newCampaign
+    if DWMK_CreateCampaign then
+        newCampaign = DWMK_CreateCampaign(newName)
+    else
+        -- fallback if function not available
+        Print("WARNING[UI.lua]: local newCampaign fallback triggered")
+        newCampaign = {
+            name = newName,
+            created = time(),
+            lastUsed = time(),
+            settings = {
+                enforcementlevel = 1,
+                anchorRadius = 30,
+            },
+            mounts = {
+                ground = nil,
+                flying = nil,
+            },
+            anchors = {}
+        }
+    end
+
+    DismountedDB.campaigns[campaignID] = newCampaign
+    DismountedCharDB.activeCampaign = campaignID
+
+    newCampaignEditBox:SetText("")
+    newCampaignEditBox:ClearFocus()
+
+    InitializeCampaignDropdown()
+    UIDropDownMenu_SetText(campaignDropdown, newName)
+    UpdateUI()
+
+    DEFAULT_CHAT_FRAME:AddMessage("[" .. tag .. "] Created and switched to campaign: " .. newName)
+end)
+
+local deleteCampaignButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+deleteCampaignButton:SetSize(100, 22)
+deleteCampaignButton:SetPoint("TOPLEFT", 250, -75)
+deleteCampaignButton:SetText("Delete Campaign")
+deleteCampaignButton:SetScript("OnClick", function()
+    local currentCampaignID = DismountedCharDB and DismountedCharDB.activeCampaign
+
+    if not currentCampaignID then
+        DEFAULT_CHAT_FRAME:AddMessage("[".. tag .. "] No Campaign to delete")
+        return
+    end
+
+    local campaignName = DismountedDB.campaigns[currentCampaignID].name
+
+    -- show confirmation dialog
+    StaticPopupDialogs["DWMK_DELETE_CAMPAIGN"] = {
+        text = "Are you sure you want to delete the campaign:\n\n|cFFFFFF00" .. campaignName .. "|r\n\nThis will remove all mount assignments and anchors for this campaign.",
+        button1 = "Delete",
+        button2 = "Cancel",
+        OnAccept = function()
+            -- delete the campaign
+            DismountedDB.campaigns[currentCampaignID] = nil
+
+            -- find another campaign to switch to, or create default
+            local newCampaignID = nil
+            for campaignID in pairs(DismountedDB.campaigns) do
+                newCampaignID = campaignID
+                break
+            end
+
+            if not newCampaignID then
+                -- no campaigns left, create a new default
+                if DWMK_CreateCampaign then
+                    DismountedDB.campaigns["default"] = DWMK_CreateCampaign("Default Campaign")
+                else
+                    DismountedDB.campaigns["default"] = {
+                        name = "Default Campaign",
+                        created = time(),
+                        lastUsed = time(),
+                        settings = {
+                            enforcementLevel = 1,
+                            anchorRadius = 30,
+                        },
+                        mounts = {
+                            ground = nil,
+                            flying = nil,
+                        },
+                        anchors = {}
+                    }
+                end
+                newCampaignID = "default"
+                DEFAULT_CHAT_FRAME:AddMessage("[".. tag .."] Created new default campaign")
+            end
+
+            DismountedCharDB.activeCampaign = newCampaignID
+
+            -- refresh UI
+            InitializeCampaignDropdown()
+            UIDropDownMenu_SetText(campaignDropdown, DismountedDB.campaigns[newCampaignID].name)
+            UpdateUI()
+
+            DEFAULT_CHAT_FRAME:AddMessage("[".. tag .."] Deleted campaign: " .. campaignName)
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+    StaticPopup_Show("DWMK_DELETE_CAMPAIGN")
+end)
+
+--------------------------------------------------------------------------------
+-- Separator
+--------------------------------------------------------------------------------
+
+local separator = frame:CreateTexture(nil, "ARTWORK")
+separator:SetSize(360, 1)
+separator:SetPoint("TOPLEFT", 20, -145)
+separator:SetColorTexture(0.5, 0.5, 0.5, 0.5)
+
+local separator2 = frame:CreateTexture(nil, "ARTWORK")
+separator2:SetSize(360, 1)
+separator2:SetPoint("TOP_LEFT", 20, -310)
+separator2:SetColorTexture(0.5, 0.5, 0.5, 0.5)
+
 -- Show/hide functions
 frame:SetScript("OnShow", function(self)
+    InitializeCampaignDropdown()
     UpdateUI()
 end)
 
