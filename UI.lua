@@ -212,7 +212,7 @@ end)
 
 local separator2 = frame:CreateTexture(nil, "ARTWORK")
 separator2:SetSize(360, 1)
--separator2:SetPoint("TOPLEFT", 20, -300)
+separator2:SetPoint("TOPLEFT", 20, -300)
 separator2:SetColorTexture(0.5, 0.5, 0.5, 0.5)
 
 --------------------------------------------------------------------------------
