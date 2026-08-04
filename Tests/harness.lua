@@ -147,7 +147,16 @@ function UnitInVehicle() return false end
 function IsFlying() return false end
 function IsFalling() return false end
 function IsFlyableArea() return true end
-function IsResting() return false end
+
+local resting, inNeighborhood = false, false
+function IsResting() return resting end
+
+C_Housing = {
+    IsOnNeighborhoodMap = function() return inNeighborhood end,
+    IsInsideHouseOrPlot = function() return false end,
+    IsInsideHouse       = function() return false end,
+    IsInsidePlot        = function() return false end,
+}
 function InCombatLockdown() return false end
 function Dismount() mounted = false end
 function PlaySound() end
@@ -532,6 +541,79 @@ for _, cmd in ipairs({ "leave 800", "state", "ff 30", "state", "offline 600", "c
     local okCmd, err = pcall(ns.Debug.Command, cmd)
     check("/dwmk sim " .. cmd, okCmd, err)
 end
+
+--==============================================================
+print("\n== 16. settlements and housing neighborhoods ==")
+--==============================================================
+DWMKDB.campaigns.pil = ns.DB.NewCampaign("pilgrim", "Pilgrim")
+ns.DB.SetActiveCampaign("pil")
+ns.Debug.Command("clear")
+PLAYER.mapID, PLAYER.x, PLAYER.y = 84, 0.50, 0.50
+
+resting, inNeighborhood = false, false
+check("open road is fine under Pilgrim", ns.Rules.Evaluate(ns.Mount.InfoFromSpell(111)) == true)
+
+resting = true
+local okTown, whyTown = ns.Rules.Evaluate(ns.Mount.InfoFromSpell(111))
+check("resting area refuses under Pilgrim", okTown == false, whyTown)
+
+-- The exception: a neighborhood is a rested area but must not be treated as a town.
+inNeighborhood = true
+check("neighborhood is not a settlement", ns.Rules.InSettlement() == false)
+check("neighborhood allows riding under Pilgrim",
+      ns.Rules.Evaluate(ns.Mount.InfoFromSpell(111)) == true)
+check("Ride button does not refuse in a neighborhood",
+      ns.RideButton.ChooseMount() ~= nil)
+
+-- All rules stand down at home, not just the settlement one.
+ns.DB.SetActiveCampaign("nomad")
+check("Nomad allows a flyer in a neighborhood",
+      ns.Rules.Evaluate(ns.Mount.InfoFromSpell(222)) == true)
+check("Nomad still refuses a flyer outside", (function()
+    inNeighborhood = false
+    local ok = ns.Rules.Evaluate(ns.Mount.InfoFromSpell(222))
+    inNeighborhood = true
+    return ok == false
+end)())
+
+ns.DB.SetActiveCampaign("bond")
+check("Bonded allows any mount in a neighborhood",
+      ns.Rules.Evaluate(ns.Mount.InfoFromSpell(222)) == true)
+check("Bonded Ride key works at home before a bond is chosen", (function()
+    local saved = DWMKDB.campaigns.bond.mounts.bonded
+    DWMKDB.campaigns.bond.mounts.bonded = nil
+    local spell = ns.RideButton.ChooseMount()
+    DWMKDB.campaigns.bond.mounts.bonded = saved
+    return spell ~= nil
+end)())
+
+-- Dismounting at home must not strand the mount.
+ns.DB.SetActiveCampaign("pil")
+ns.Debug.Command("clear")
+mounted = true
+fireEvent("UNIT_SPELLCAST_SENT", "player", nil, nil, 111)
+fireEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
+mounted = false
+fireEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
+check("dismounting in a neighborhood leaves nothing behind",
+      ns.DB.GetRetrieval().state == ns.STATE.IDLE, ns.DB.GetRetrieval().state)
+
+-- And leaving home does not retroactively strand it either.
+inNeighborhood = false
+PLAYER.x = 0.80
+tickAll(6)
+check("walking out of a neighborhood strands nothing",
+      ns.DB.GetRetrieval().state == ns.STATE.IDLE, ns.DB.GetRetrieval().state)
+
+-- A missing C_Housing (older client, or the API moving) must degrade quietly.
+local savedHousing = C_Housing
+C_Housing = nil
+check("missing C_Housing degrades to 'not in a neighborhood'",
+      ns.Mount.InNeighborhood() == false)
+C_Housing = { }  -- present but empty, as if the function set changed
+check("empty C_Housing degrades too", ns.Mount.InNeighborhood() == false)
+C_Housing = savedHousing
+resting = false
 
 --==============================================================
 print(("\n%d passed, %d failed"):format(pass, fail))

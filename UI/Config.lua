@@ -208,7 +208,7 @@ local function BuildPanel()
 
     controls.settlement = ns.Widgets.CreateCheckbox(content,
         "Dismount in settlements",
-        "Riding is refused in cities, towns and inns. The open road is unaffected.",
+        "Riding is refused in cities, towns and inns. The open road and your own neighborhood are unaffected.",
         function(checked)
             local c = Campaign()
             if c then c.rules.settlementDismount = checked end

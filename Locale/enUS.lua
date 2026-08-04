@@ -147,7 +147,9 @@ L.CFG_HOW_IT_WORKS_BODY  = [[An addon cannot stop the game from summoning a moun
 
 So DWMK works two ways. The Ride key only ever casts a mount your campaign allows, which means an illegal one is never cast in the first place. If you mount some other way, DWMK removes it the moment it appears.
 
-You will never be given a countdown and then yanked off a mount.]]
+You will never be given a countdown and then yanked off a mount.
+
+No rule applies inside your housing neighborhood, whichever campaign you are running. It is home ground: your stables are there, it is where mounts get shown off, and nothing you left there is ever treated as left behind.]]
 
 L.CFG_ENFORCEMENT       = "If you break a rule"
 L.CFG_ENFORCEMENT_DESC  = "What happens when you ride something this campaign doesn't allow."

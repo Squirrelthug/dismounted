@@ -63,6 +63,10 @@ end
 --------------------------------------------------------------------------------
 
 local function InSettlement()
+    -- A housing neighborhood is a rested area, so without this it would read as
+    -- a settlement and refuse the player a mount outside their own front door.
+    if ns.Mount.InNeighborhood() then return false end
+
     return IsResting() and true or false
 end
 
@@ -118,6 +122,14 @@ function Rules.Evaluate(info)
     -- Off means off. The addon still records where mounts are left and still
     -- retrieves them; it simply never objects to anything.
     if r.enforcement == ns.ENFORCE.OFF then
+        return true
+    end
+
+    -- Home ground. No campaign rule applies inside a housing neighborhood: it's
+    -- where your stables are, it's where people go to show mounts off, and it is
+    -- a rested area that would otherwise trip the settlement rule. Whatever
+    -- constraints you signed up for, they are about the road, not your garden.
+    if ns.Mount.InNeighborhood() then
         return true
     end
 

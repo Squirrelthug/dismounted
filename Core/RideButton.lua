@@ -96,10 +96,15 @@ function RideButton.ChooseMount()
         return RANDOM_FAVORITE
     end
 
+    -- Inside a housing neighborhood no campaign rule applies, so the button
+    -- should never refuse there. See Core/Mount.lua for why.
+    local homeGround = ns.Mount.InNeighborhood()
+
     -- "Away" means genuinely out of reach. A mount you are standing next to is
     -- still yours to ride, even though the retrieval state technically has it
     -- marked as left behind.
     local function isAway(spellID)
+        if homeGround then return false end
         return retrieval
             and retrieval.state ~= ns.STATE.IDLE
             and retrieval.spellID == spellID
@@ -120,6 +125,9 @@ function RideButton.ChooseMount()
     if r.mountPolicy == ns.MOUNTPOLICY.SINGLE then
         local bonded = campaign.mounts.bonded
         if not bonded then
+            -- At home the key still has to do something, even before the player
+            -- has chosen who they're bonded to.
+            if homeGround then return RANDOM_FAVORITE end
             return nil, L.DENY_NO_BOND_CHOSEN
         end
         if isAway(bonded) then
@@ -141,7 +149,8 @@ function RideButton.ChooseMount()
         return RANDOM_FAVORITE
     end
 
-    local canUseFlyer = flying and not r.groundOnly and not isAway(flying)
+    -- Ground-only is a rule about the road, so it doesn't bind at home either.
+    local canUseFlyer = flying and (homeGround or not r.groundOnly) and not isAway(flying)
 
     -- Prefer the flyer where flying is actually possible, otherwise the ground
     -- mount. This is the one place the button makes a judgement call for the

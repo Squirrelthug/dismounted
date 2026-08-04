@@ -121,7 +121,7 @@ local definitions = {
             leaving     = "Sent for automatically.",
             gettingBack = GettingBackText,
             pickUp      = function(p) return PickUpText(p.rules.pickupRadius) end,
-            also        = "Riding inside cities, towns and settlements is refused. The open road is entirely yours.",
+            also        = "Riding inside cities, towns and settlements is refused. The open road is entirely yours, and so is your own neighborhood.",
         },
     },
 
@@ -418,6 +418,7 @@ function Presets.DescribeRules(campaign)
     if r.settlementDismount then
         table.insert(also, "Riding inside settlements is refused.")
     end
+    table.insert(also, "No rule applies inside your housing neighborhood.")
 
     return {
         whichMounts = whichMounts,

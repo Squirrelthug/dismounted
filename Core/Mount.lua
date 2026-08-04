@@ -102,6 +102,45 @@ function Mount.GetPosition()
     return mapID, x, y
 end
 
+--------------------------------------------------------------------------------
+-- Neighborhoods
+--
+-- Player housing neighborhoods are rested areas, which means the settlement rule
+-- would otherwise refuse mounts in the player's own front garden. They are also
+-- where people go to show mounts off - Blizzard is actively building toward
+-- displaying mounts and pets at your house - so an addon that forbids riding
+-- there is fighting the game.
+--
+-- So a neighborhood is treated as home ground: no rule applies inside one.
+--
+-- Every call is guarded. C_Housing arrived in 12.0 and the exact function set is
+-- still moving, so a missing function must degrade to "not in a neighborhood"
+-- rather than erroring on every mount.
+--------------------------------------------------------------------------------
+
+function Mount.InNeighborhood()
+    if not C_Housing then return false end
+
+    -- The broadest check: covers the whole neighborhood zone, not just the
+    -- player's own plot.
+    if C_Housing.IsOnNeighborhoodMap and C_Housing.IsOnNeighborhoodMap() then
+        return true
+    end
+
+    -- Fallbacks, in case the map check misses an interior or an instanced plot.
+    if C_Housing.IsInsideHouseOrPlot and C_Housing.IsInsideHouseOrPlot() then
+        return true
+    end
+    if C_Housing.IsInsideHouse and C_Housing.IsInsideHouse() then
+        return true
+    end
+    if C_Housing.IsInsidePlot and C_Housing.IsInsidePlot() then
+        return true
+    end
+
+    return false
+end
+
 function Mount.GetMapName(mapID)
     if not mapID then return UNKNOWN end
     local info = C_Map.GetMapInfo(mapID)

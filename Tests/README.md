@@ -31,6 +31,7 @@ Exits non-zero on any failure, so it drops straight into CI if you want it there
 | 13 | Config, picker and tracker rendering under every preset |
 | 14 | Tracker across every retrieval state, via Ironhoof's manual call |
 | 15 | Every `/dwmk sim` subcommand |
+| 16 | Settlements vs housing neighborhoods, including every rule standing down at home, nothing being stranded there, and `C_Housing` being absent or empty |
 
 ## What it can't cover
 

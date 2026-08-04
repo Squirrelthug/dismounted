@@ -210,6 +210,15 @@ function Retrieval.OnDismounted()
     local r = ns.DB.GetRetrieval()
     if not r then return end
 
+    -- Stepping off inside your own neighborhood doesn't strand anything. It's
+    -- home: your mounts live there, and no rule applies there anyway. Recording
+    -- it would mean teleporting out of your own garden left a mount behind that
+    -- had to be couriered back to you, which is a silly way to treat a stable.
+    if ns.Mount.InNeighborhood() then
+        ns.Mount.ClearLastCastSpellID()
+        return
+    end
+
     -- Only one mount can be out at a time. If something is already left behind,
     -- the older one is forgotten rather than tracked in parallel - two pending
     -- retrievals would double the state and the explaining for very little gain.

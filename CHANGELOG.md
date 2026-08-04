@@ -39,8 +39,15 @@ types you choose from, and a retrieval service that brings your mount back.
   when nothing is happening.
 - **Offline progress.** Both timers advance while you're logged out. Leave for an
   hour and your mount is waiting.
+- **Housing neighborhoods are home ground.** No campaign rule applies inside one,
+  whichever campaign you're running, and a mount you step off there is never
+  treated as left behind. Neighborhoods are rested areas, so without this the
+  settlement rule would have refused you a mount outside your own front door —
+  and they're where mounts get shown off, which the addon has no business
+  fighting. Detected via `C_Housing`, with every call guarded so a missing or
+  moved function degrades quietly instead of erroring on every mount.
 - `/dwmk sim` harness for testing retrieval timers without crossing a continent,
-  and an offline test suite under `Tests/` covering 89 cases.
+  and an offline test suite under `Tests/` covering 102 cases.
 
 ### Changed
 
