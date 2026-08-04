@@ -1,11 +1,39 @@
 ## Interface: 120000, 120001
 ## Title: Dude Where's My K'arroc
-## Notes: Campaign-based mount persistence and immersion
+## Notes: Campaign-based mount constraints, with a retrieval service for the mounts you leave behind.
 ## Author: Squirrelthug
-## Version: 1.0.0
-## SavedVariables: DismountedDB
-## SavedVariablesPerCharacter: DismountedCharDB
+## Version: 2.0.0
 ## IconTexture: 6841151
+## X-Category: Roleplay
+## X-Website: https://github.com/Squirrelthug/DWMK
 
-DWMK.lua
-UI.lua
+## SavedVariables: DWMKDB, DismountedDB
+## SavedVariablesPerCharacter: DWMKCharDB, DismountedCharDB
+
+# Key bindings for the Ride button.
+Bindings.xml
+
+# Strings first so every module can reference them at load time.
+Locale/enUS.lua
+
+# Core - order matters: each module may reference the ones above it.
+Core/Init.lua
+Core/DB.lua
+Core/Mount.lua
+Core/Presets.lua
+Core/Rules.lua
+Core/RideButton.lua
+Core/Waypoint.lua
+Core/MapCircle.lua
+Core/Notify.lua
+Core/Retrieval.lua
+
+# UI
+UI/Widgets.lua
+UI/CampaignPicker.lua
+UI/Config.lua
+UI/Tracker.lua
+
+# Commands and the debug harness last - they reach into everything above.
+Core/Commands.lua
+Core/Debug.lua

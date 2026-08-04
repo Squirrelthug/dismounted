@@ -1,0 +1,11 @@
+<Bindings>
+    <!--
+        The CLICK form is handled natively by the client: pressing the key clicks
+        DWMKRideButton, and the secure action on that button runs from a real
+        hardware event, which is what a protected action requires.
+
+        The display name comes from the BINDING_NAME_ global set in
+        Core/RideButton.lua.
+    -->
+    <Binding name="CLICK DWMKRideButton:LeftButton" header="DWMK" />
+</Bindings>

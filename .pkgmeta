@@ -1,1 +1,5 @@
 package-as: DudeWheresMyKarroc
+
+ignore:
+    # Development only - never ships to players.
+    - Tests
