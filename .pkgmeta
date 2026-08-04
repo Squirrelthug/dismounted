@@ -1,4 +1,7 @@
-package-as: DudeWheresMyKarroc
+# Must match DWMK.toc, the repo, and the folder players install into. The
+# packager looks for a TOC named after package-as, and WoW only loads
+# <folder>/<folder>.toc - so all three names have to agree.
+package-as: DWMK
 
 ignore:
     # Development only - never ships to players.
